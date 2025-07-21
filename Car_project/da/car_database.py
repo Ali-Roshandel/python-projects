@@ -1,9 +1,11 @@
 class CarDa:
+    def __init__(self,name):
+        self.name = name
     def save(self):
-        print("Car Information Saved")
+        print(f"Car {self.name} Information Saved")
 
     def edit(self):
-        print("Car Information Edited")
+        print(f"Car {self.name} Information Edited")
 
     def remove(self):
-        print("Car Information Removed")
+        print(f"Car {self.name} Information Removed")
