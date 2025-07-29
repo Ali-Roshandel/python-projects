@@ -146,6 +146,7 @@ class WelcomeWindow(QWidget):
 
         self.setLayout(self.layout)
 
+    # Loging out
     def logout(self):
         reply = QMessageBox.question(self, "Confirm Logout", "Are you sure to logout?",
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
