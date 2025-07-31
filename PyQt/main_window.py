@@ -1,8 +1,8 @@
 import sys
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QLabel, QStatusBar, QToolBar
 
 
 class MainWindow(QMainWindow):
@@ -18,10 +18,15 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.label)
 
         # Statusbar
-        self.statusBar().showMessage("You are now logged in")
+        # self.statusBar().showMessage("You are now logged in")
+        status_bar = QStatusBar(self)
+        self.setStatusBar(status_bar)
 
         # Menubar
-        self.create_menu_bar()
+        # self.create_menu_bar()
+
+        # Toolbar
+        self.create_tool_bar()
 
     def create_menu_bar(self):
         menu_bar = self.menuBar()
@@ -39,8 +44,40 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
 
+    def create_tool_bar(self):
+        tool_bar = QToolBar(self)
+        self.addToolBar(tool_bar)
+
+        exit_item = self.add_to_tool_bar("Exit", "application-exit", "Exit Main Window",
+                                         "Ctrl+Q", self.close_app)
+        about_item = self.add_to_tool_bar("About", "help-about", "About Main Window",
+                                          "Ctrl+I", self.show_about)
+        refresh_item = self.add_to_tool_bar("Refresh", "view-refresh", "Refresh Main Window",
+                                            "ctrl+R", self.refresh_window)
+
+        tool_bar.addAction(exit_item)
+        tool_bar.addAction(about_item)
+        tool_bar.addAction(refresh_item)
+
+    def add_to_tool_bar(self, title, icon, status_tip, shortcut, func):
+        item = QAction(QIcon.fromTheme(icon), title, self)
+        item.setStatusTip(status_tip)
+        item.setShortcut(shortcut)
+        item.triggered.connect(func)
+        return item
+
     def show_about(self):
         QMessageBox.information(self, "About", "This is a PyQt6 Qt Application created by Ali Roshandel")
+        self.label.setText("Welcome to Main Window")
+
+    def close_app(self):
+        reply = QMessageBox.question(self, "Exit", "Are you sure to exit",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
+            self.close()
+
+    def refresh_window(self):
+        self.label.setText("Refreshed!")
 
 
 # Example
