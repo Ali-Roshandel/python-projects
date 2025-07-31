@@ -34,7 +34,7 @@ def email_address_regex(email):
     :param email: Email ID
     :return: Is Valid Or Not
     """
-    if re.fullmatch("[a-zA-Z0-9][\w!#$%&'*+-/=?^_`{|}~.]{,63}[a-zA-Z0-9]@[a-z]{3,8}\.com", email):
+    if re.fullmatch("[a-zA-Z0-9][\w!#$%&'*+-/=?^_`{|}~.]{,63}@[a-z]{3,8}\.com", email):
         return True
     else:
         return False
@@ -47,7 +47,7 @@ def name_regex(name):
     :param name: Name
     :return: Is Valid Or Not
     """
-    if re.fullmatch("[a-zA-Z]{3,15}[\s\-]?[a-zA-Z]{0,15}[\s\-_]+[a-zA-Z]{2,20}[\s\-]?[a-zA-Z]{0,10}", name):
+    if re.fullmatch("[a-zA-Z]{3,15}[\s\-]?[a-zA-Z]{0,15}[\s\-_]*[a-zA-Z]{,20}[\s\-]?[a-zA-Z]{0,10}", name):
         return True
     else:
         return False
@@ -56,19 +56,18 @@ def name_regex(name):
 # Test Passed
 def address_regex(address):
     """
-    Check Validation Of Address
-    :param address: Address
+    Check Validation Of Address    :param address:
     :return: Is Valid Or Not
     """
-    if re.fullmatch("[a-zA-Z\s\-_]{2,}(pelak)?[1-9]?[\d]{0,2}[\s]*", address, re.I):
+    if re.fullmatch("[a-zA-Z\s\-_]{2,}(pelak)?[1-9]?\d{0,2}\s*", address, re.I):
         return True
     else:
         return False
 
-
-while True:
-    arg = input("Enter: ")
-    if address_regex(arg):
-        print("Valid")
-    else:
-        print("Not Valid")
+if __name__ == '__main__':
+    while True:
+        arg = input("Enter: ")
+        if address_regex(arg):
+            print("Valid")
+        else:
+            print("Not Valid")
