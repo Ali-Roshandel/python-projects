@@ -13,7 +13,7 @@ class InfoWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Info Window")
-        self.setGeometry(300, 300, 450, 350)
+        self.setGeometry(200, 200, 450, 550)
 
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
@@ -34,6 +34,12 @@ class InfoWindow(QMainWindow):
         self.clear_table_button = QPushButton("Clear Table")
         self.clear_table_button.clicked.connect(self.clear_table)
 
+        self.edit_button = QPushButton("Edit Info")
+        self.edit_button.clicked.connect(self.edit_info)
+
+        self.remove_button = QPushButton("Remove Info")
+        self.remove_button.clicked.connect(self.remove_info)
+
         self.setStyleSheet("""
                     QPushButton {
                         padding: 6px 10px;
@@ -45,6 +51,8 @@ class InfoWindow(QMainWindow):
         self.table = QTableWidget(self)
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Name", "Email", "Job", "Message"])
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.cellClicked.connect(self.load_to_form)
 
         # Entity layout
         entity_layout = QFormLayout()
@@ -57,6 +65,8 @@ class InfoWindow(QMainWindow):
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.add_to_table_button)
         button_layout.addWidget(self.clear_table_button)
+        button_layout.addWidget(self.edit_button)
+        button_layout.addWidget(self.remove_button)
 
         # Main layout
         main_layout = QVBoxLayout()
@@ -70,52 +80,116 @@ class InfoWindow(QMainWindow):
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
 
-    def add_to_table(self):
-        name = self.input_name.text().strip().lower()
-        email = self.input_email.text()
-        job = self.input_job.currentText()
-        message = self.input_message.toPlainText()
-
+    def form_validator(self, name, email, message):
         if not name or not email or not message:
             QMessageBox.warning(self, "Missing Info", "Please fill all the fields")
             self.status_bar.showMessage("Incomplete Fields", 3000)
-            return
+            return False
 
         if not name_regex(name):
             QMessageBox.critical(self, "Invalid Name", "Please enter a valid name")
             self.status_bar.showMessage("Invalid Name", 3000)
             self.input_name.clear()
             self.input_name.setFocus()
-            return
+            return False
 
         if not email_address_regex(email):
             QMessageBox.critical(self, "Invalid Email", "Please enter a valid email")
             self.status_bar.showMessage("Invalid Email", 3000)
             self.input_email.clear()
             self.input_email.setFocus()
-            return
+            return False
 
-        if self.email_duplicate(email):
-            QMessageBox.critical(self, "Duplicate Email", "Email Already Exists")
+        if self.name_duplicate(name, skip_row=self.table.currentRow()):
+            QMessageBox.critical(self, "Duplicate Name", "Name already exists")
+            self.status_bar.showMessage("Duplicate Name", 3000)
+            self.input_name.clear()
+            self.input_name.setFocus()
+            return False
+
+        if self.email_duplicate(email, skip_row=self.table.currentRow()):
+            QMessageBox.critical(self, "Duplicate Email", "Email already exists")
             self.status_bar.showMessage("Duplicate Email", 3000)
             self.input_email.clear()
             self.input_email.setFocus()
-            return
+            return False
 
-        row_position = self.table.rowCount()
-        self.table.insertRow(row_position)
+        return True
 
-        self.table.setItem(row_position, 0, QTableWidgetItem(name))
-        self.table.setItem(row_position, 1, QTableWidgetItem(email))
-        self.table.setItem(row_position, 2, QTableWidgetItem(job))
-        self.table.setItem(row_position, 3, QTableWidgetItem(message))
+    def add_to_table(self):
+        name = self.input_name.text().strip().lower()
+        email = self.input_email.text()
+        job = self.input_job.currentText()
+        message = self.input_message.toPlainText()
 
-        self.status_bar.showMessage("Completed", 3000)
-        self.clear_fields()
+        if self.form_validator(name, email, message):
+            row_position = self.table.rowCount()
+            self.table.insertRow(row_position)
 
-    def email_duplicate(self, email):
+            self.table.setItem(row_position, 0, QTableWidgetItem(name))
+            self.table.setItem(row_position, 1, QTableWidgetItem(email))
+            self.table.setItem(row_position, 2, QTableWidgetItem(job))
+            self.table.setItem(row_position, 3, QTableWidgetItem(message))
+
+            self.status_bar.showMessage("Completed", 3000)
+            QMessageBox.information(self, "Successful Add", f" Dear {name} your information has been added to table.")
+            self.clear_fields()
+
+    def load_to_form(self, row):
+        name = self.table.item(row, 0).text()
+        email = self.table.item(row, 1).text()
+        job = self.table.item(row, 2).text()
+        message = self.table.item(row, 3).text()
+
+        self.input_name.setText(name)
+        self.input_email.setText(email)
+        self.input_job.setCurrentText(job)
+        self.input_message.setText(message)
+
+    def edit_info(self):
+        name = self.input_name.text().strip().lower()
+        email = self.input_email.text()
+        job = self.input_job.currentText()
+        message = self.input_message.toPlainText()
+
+        if self.form_validator(name, email, message):
+            row = self.table.currentRow()
+            self.table.item(row, 0).setText(name)
+            self.table.item(row, 1).setText(email)
+            self.table.item(row, 2).setText(job)
+            self.table.item(row, 3).setText(message)
+
+            QMessageBox.information(self, "Successful Edit", " Information has been updated.")
+            self.status_bar.showMessage("Updated", 3000)
+            self.clear_fields()
+
+    def remove_info(self):
+        row = self.table.currentRow()
+
+        if row < 0:
+            QMessageBox.critical(self, "Error", "Please select a row")
+        else:
+            reply = QMessageBox.question(self, "Remove Record", "Are you sure to remove the record?",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.table.removeRow(row)
+
+                QMessageBox.information(self, "Info Removed", "Info has been removed.")
+                self.status_bar.showMessage("Info Removed", 3000)
+
+    def email_duplicate(self, email, skip_row=None):
         for row in range(self.table.rowCount()):
+            if skip_row is not None and skip_row == row:
+                continue
             if self.table.item(row, 1).text() == email:
+                return True
+        return False
+
+    def name_duplicate(self, name, skip_row=None):
+        for row in range(self.table.rowCount()):
+            if skip_row is not None and skip_row == row:
+                continue
+            if self.table.item(row, 0).text() == name:
                 return True
         return False
 
