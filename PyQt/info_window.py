@@ -80,7 +80,7 @@ class InfoWindow(QMainWindow):
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
 
-    def form_validator(self, name=None, email=None, message=None):
+    def form_validator(self, name=None, email=None, message=" "):
         if not name or not email or not message:
             QMessageBox.warning(self, "Missing Info", "Please fill all the fields")
             self.status_bar.showMessage("Incomplete Fields", 3000)
@@ -118,7 +118,7 @@ class InfoWindow(QMainWindow):
 
     def add_to_table(self):
         name = self.input_name.text().strip().lower()
-        email = self.input_email.text()
+        email = self.input_email.text().strip()
         job = self.input_job.currentText()
         message = self.input_message.toPlainText()
 

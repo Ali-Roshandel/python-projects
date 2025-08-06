@@ -1,0 +1,126 @@
+import sys
+
+from PyQt6.QtGui import QIcon, QAction
+
+from regex.regex_practice import name_regex, email_address_regex
+
+from PyQt6.QtWidgets import (QApplication, QWidget, QFormLayout, QMessageBox, QPushButton,
+                             QStatusBar, QHBoxLayout, QVBoxLayout, QLineEdit,
+                             QTextEdit, QTableWidget, QTableWidgetItem, QComboBox, QMainWindow, QCheckBox, QLabel,
+                             QRadioButton
+                             )
+
+
+class MainWindowBase(QMainWindow):
+    def __init__(self, title, icon=None, x=200, y=200, width=350, height=250):
+        super().__init__()
+
+        self.setWindowTitle(title)
+        self.setWindowIcon(QIcon(icon))
+        self.setGeometry(x, y, width, height)
+
+    def create_label(self, title, align=None, style=None):
+        label = QLabel(self, title)
+        label.setAlignment(align)
+        label.setStyleSheet(style)
+
+        return label
+
+    def create_entry(self, entry_type="line_edit", read_only=False, holder_text=None, hide_pass=False):
+        if entry_type == "line_edit":
+            entry = QLineEdit()
+        elif entry_type == "text_edit":
+            entry = QTextEdit()
+        else:
+            raise NotImplementedError
+
+        entry.setReadOnly(read_only)
+        entry.setPlaceholderText(holder_text)
+        entry.setEchoMode(QLineEdit.EchoMode.Password) if hide_pass else None
+
+        return entry
+
+    @staticmethod
+    def create_button(title, icon=None, style=None, func=None):
+        button = QPushButton(title)
+        button.setStyleSheet(style)
+        if icon:
+            button.setIcon(icon)
+        if func:
+            button.clicked.connect(func)
+
+        return button
+
+    @staticmethod
+    def create_checkbox(title, state=False, func=None):
+        checkbox = QCheckBox(title)
+        checkbox.setChecked(state)
+        if func:
+            checkbox.stateChanged.connect(func)
+
+        return checkbox
+
+    @staticmethod
+    def create_combobox(items):
+        combobox = QComboBox()
+        combobox.addItems(items)
+        combobox.setCurrentIndex(0)
+
+        return combobox
+
+    @staticmethod
+    def create_radio_button(*titles, default=None):
+        buttons = []
+        for title in titles:
+            button = QRadioButton(title)
+            if title == default:
+                button.setChecked(True)
+            buttons.append(button)
+
+        return buttons
+
+    def create_table(self, n_column=2, labels=None, func=None, no_editable=False):
+        table = QTableWidget(self)
+        table.setColumnCount(n_column)
+        table.setHorizontalHeaderLabels(labels)
+        if func is not None:
+            table.cellClicked.connect(func)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers) if no_editable else None
+
+        return table
+
+    def create_action(self, title, icon, status_tip, status_shortcut, func=None):
+        item = QAction(QIcon.fromTheme(icon), title, self)
+        item.setStatusTip(status_tip)
+        item.setShortcut(status_shortcut)
+        if func:
+            item.triggered.connect(func)
+
+        return item
+
+    @staticmethod
+    def add_form_layout(widgets):
+        form_layout = QFormLayout()
+        for title, widget in widgets.items():
+            form_layout.addRow(title, widget)
+
+        return form_layout
+
+    @staticmethod
+    def add_layout(layout_type="vertical", widget_list=None, layout_list=None):
+        if layout_type == "vertical":
+            layout = QVBoxLayout()
+        elif layout_type == "horizontal":
+            layout = QHBoxLayout()
+        else:
+            raise NotImplementedError
+
+        if widget_list:
+            for widget in widget_list:
+                layout.addWidget(widget)
+
+        if layout_list:
+            for layouts in layout_list:
+                layout.addLayout(layouts)
+
+        return layout

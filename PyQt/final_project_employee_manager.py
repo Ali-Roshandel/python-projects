@@ -1,94 +1,61 @@
-from info_window import *
-
-from PyQt6.QtGui import QIcon, QAction
-from PyQt6.QtWidgets import QCheckBox, QRadioButton
+from main_window_base import *
+from PyQt.main_window_base import MainWindowBase
 
 
-class EmployeeManager(QMainWindow):
+class EmployeeManager(MainWindowBase):
     def __init__(self):
-        super().__init__()
-
-        self.validator = InfoWindow()
-
-        # Main window features
-        self.setWindowTitle("Employee Manager")
-        self.setWindowIcon(QIcon("employee_icon.png"))
-        self.setGeometry(300, 300, 1030, 450)
+        super().__init__("Employee Manager", "employee_icon.png", 300, 300, 1030, 450)
 
         # Central widget
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
 
-        # Entity
-        self.name_input = QLineEdit(self)
-        self.email_input = QLineEdit(self)
+        # Entry
+        self.name_input = self.create_entry("line_edit")
+        self.email_input = self.create_entry("line_edit")
 
-        self.position_input = QComboBox(self)
-        self.position_input.addItems(["Manager", "Marketing", "Accounting", "HR",
-                                      "IT", "Finance", "Documentation", "Other"])
+        self.position_input = self.create_combobox(["Manager", "Marketing", "Accounting", "HR",
+                                                    "IT", "Finance", "Documentation", "Other"])
 
-        self.active_checkbox = QCheckBox("Active")
+        self.active_checkbox = self.create_checkbox("Active")
 
-        self.male_input = QRadioButton("Male")
-        self.female_input = QRadioButton("Female")
+        self.gender_input = self.create_radio_button("Male", "Female", default="Male")
 
-        self.description_input = QTextEdit(self)
+        self.description_input = self.create_entry("text_edit")
 
         # Buttons
-        self.add_button = QPushButton("Add")
-        self.add_button.clicked.connect(self.add_to_table)
+        style = "padding: 6px 10px; font-weight: bold;"
 
-        self.edit_button = QPushButton("Edit")
-        self.edit_button.clicked.connect(self.edit_table)
-
-        self.delete_button = QPushButton("Delete")
-        self.delete_button.clicked.connect(self.delete_from_table)
-
-        self.clear_button = QPushButton("Clear Table")
-        self.clear_button.clicked.connect(self.clear_table)
-
-        self.setStyleSheet(self.setStyleSheet("""
-                    QPushButton {
-                        padding: 6px 10px;
-                        font-weight: bold;
-                    }
-                """))
+        self.add_button = self.create_button("Add Employee", style=style, func=self.add_to_table)
+        self.edit_button = self.create_button("Edit Employee", style=style, func=self.edit_table)
+        self.delete_button = self.create_button("Delete Employee", style=style, func=self.delete_from_table)
+        self.clear_button = self.create_button("Clear Table", style=style, func=self.clear_table)
 
         # Table
-        self.table = QTableWidget(self)
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Name", "Email", "Position", "Active", "Gender"])
+        labels = ["Name", "Email", "Position", "Active", "Gender", "Description"]
+        self.table = self.create_table(6, labels=labels, no_editable=True)
 
         # Radio button layout
         self.radio_layout = QHBoxLayout()
-        self.radio_layout.addWidget(self.male_input)
-        self.radio_layout.addWidget(self.female_input)
+        for button in self.gender_input:
+            self.radio_layout.addWidget(button)
 
-        # Entity layout
-        self.entity_layout = QFormLayout()
-        self.entity_layout.addRow("Name:", self.name_input)
-        self.entity_layout.addRow("Email:", self.email_input)
-        self.entity_layout.addRow("Position:", self.position_input)
-        self.entity_layout.addRow("Activity:", self.active_checkbox)
-        self.entity_layout.addRow("Gender:", self.radio_layout)
-        self.entity_layout.addRow("Description:", self.description_input)
+        # Entry layout
+        entry_items = {"Name": self.name_input, "Email": self.email_input,
+                 "Position": self.position_input, "Gender": self.radio_layout,
+                 "Activity": self.active_checkbox, "Description": self.description_input}
+        self.entry_layout = self.add_form_layout(entry_items)
 
         # Button layout
-        self.button_layout = QHBoxLayout()
-        self.button_layout.addWidget(self.add_button)
-        self.button_layout.addWidget(self.edit_button)
-        self.button_layout.addWidget(self.delete_button)
-        self.button_layout.addWidget(self.clear_button)
+        button_items = [self.add_button, self.edit_button, self.delete_button, self.clear_button]
+        self.button_layout = self.add_layout(layout_type="horizontal", widget_list=button_items)
 
-        # Table layout
-        self.table_layout = QVBoxLayout()
-        self.table_layout.addLayout(self.button_layout)
-        self.table_layout.addWidget(self.table)
+        # Table and button layout
+        self.table_and_button_layout = self.add_layout(layout_list=[self.button_layout], widget_list=[self.table])
 
         # Main layout
-        self.main_layout = QHBoxLayout()
-        self.main_layout.addLayout(self.entity_layout)
-        self.main_layout.addLayout(self.table_layout)
+        main_items = [self.entry_layout, self.table_and_button_layout]
+        self.main_layout = self.add_layout(layout_type="horizontal", layout_list=main_items)
 
         self.central_widget.setLayout(self.main_layout)
 
@@ -117,13 +84,57 @@ class EmployeeManager(QMainWindow):
                                                "Ctrl+H", self.show_about)
                             )
 
-    # Create action for menubar
-    def create_action(self, title, icon, status_tip, status_shortcut, func):
-        item = QAction(QIcon.fromTheme(icon), title, self)
-        item.setStatusTip(status_tip)
-        item.setShortcut(status_shortcut)
-        item.triggered.connect(func)
-        return item
+    def form_validator(self, name, email):
+        if not name or not email:
+            QMessageBox.warning(self, "Missing Info", "Please fill all the fields")
+            self.status_bar.showMessage("Incomplete Fields", 3000)
+            return False
+
+        if not name_regex(name):
+            QMessageBox.critical(self, "Invalid Name", "Please enter a valid name")
+            self.status_bar.showMessage("Invalid Name", 3000)
+            self.name_input.clear()
+            self.name_input.setFocus()
+            return False
+
+        if not email_address_regex(email):
+            QMessageBox.critical(self, "Invalid Email", "Please enter a valid email")
+            self.status_bar.showMessage("Invalid Email", 3000)
+            self.email_input.clear()
+            self.email_input.setFocus()
+            return False
+
+        if self.name_duplicate(name, skip_row=self.table.currentRow()):
+            QMessageBox.critical(self, "Duplicate Name", "Name already exists")
+            self.status_bar.showMessage("Duplicate Name", 3000)
+            self.name_input.clear()
+            self.name_input.setFocus()
+            return False
+
+        if self.email_duplicate(email, skip_row=self.table.currentRow()):
+            QMessageBox.critical(self, "Duplicate Email", "Email already exists")
+            self.status_bar.showMessage("Duplicate Email", 3000)
+            self.email_input.clear()
+            self.email_input.setFocus()
+            return False
+
+        return True
+
+    def email_duplicate(self, email, skip_row=None):
+        for row in range(self.table.rowCount()):
+            if skip_row is not None and skip_row == row:
+                continue
+            if self.table.item(row, 1).text() == email:
+                return True
+        return False
+
+    def name_duplicate(self, name, skip_row=None):
+        for row in range(self.table.rowCount()):
+            if skip_row is not None and skip_row == row:
+                continue
+            if self.table.item(row, 0).text() == name:
+                return True
+        return False
 
     def save_file(self):
         pass
@@ -136,7 +147,27 @@ class EmployeeManager(QMainWindow):
                                          "This is the final project by Ali Roshandel.")
 
     def add_to_table(self):
-        pass
+        name = self.name_input.text().strip().lower()
+        email = self.email_input.text().strip()
+        position = self.position_input.currentText()
+        active = "Yes" if self.active_checkbox.isChecked() else "No"
+        gender = "Male" if self.gender_input[0].isChecked() else "Female"
+        description = self.description_input.toPlainText()
+
+        if self.form_validator(name, email):
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+
+            self.table.setItem(row, 0, QTableWidgetItem(name))
+            self.table.setItem(row, 1, QTableWidgetItem(email))
+            self.table.setItem(row, 2, QTableWidgetItem(position))
+            self.table.setItem(row, 3, QTableWidgetItem(active))
+            self.table.setItem(row, 4, QTableWidgetItem(gender))
+            self.table.setItem(row, 5, QTableWidgetItem(description))
+
+            self.status_bar.showMessage("Employee Added", 3000)
+            QMessageBox.information(self, "Successful Add", f" Employee {name} is added successfully.")
+            self.clear_fields()
 
     def edit_table(self):
         pass
@@ -145,7 +176,16 @@ class EmployeeManager(QMainWindow):
         pass
 
     def clear_table(self):
-        pass
+        self.table.setRowCount(0)
+        self.clear_fields()
+        self.status_bar.showMessage("Cleared", 3000)
+
+    def clear_fields(self):
+        self.name_input.clear()
+        self.email_input.clear()
+        self.position_input.setCurrentIndex(0)
+        self.active_checkbox.setChecked(False)
+        self.gender_input[0].setChecked(True)
 
 
 # Run
