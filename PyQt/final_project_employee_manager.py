@@ -1,21 +1,16 @@
 from main_window_base import *
-from PyQt.main_window_base import MainWindowBase
 
 
 class EmployeeManager(MainWindowBase):
     def __init__(self):
         super().__init__("Employee Manager", "employee_icon.png", 300, 300, 1030, 450)
 
-        # Central widget
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
-
         # Entry
         self.name_input = self.create_entry("line_edit")
         self.email_input = self.create_entry("line_edit")
 
-        self.position_input = self.create_combobox(["Manager", "Marketing", "Accounting", "HR",
-                                                    "IT", "Finance", "Documentation", "Other"])
+        combo_items = ["Manager", "Marketing", "Accounting", "HR", "IT", "Finance", "Documentation", "Other"]
+        self.position_input = self.create_combobox(combo_items)
 
         self.active_checkbox = self.create_checkbox("Active")
 
@@ -36,14 +31,12 @@ class EmployeeManager(MainWindowBase):
         self.table = self.create_table(6, labels=labels, no_editable=True)
 
         # Radio button layout
-        self.radio_layout = QHBoxLayout()
-        for button in self.gender_input:
-            self.radio_layout.addWidget(button)
+        self.radio_layout = self.add_layout("horizontal", widget_list=self.gender_input)
 
         # Entry layout
         entry_items = {"Name": self.name_input, "Email": self.email_input,
-                 "Position": self.position_input, "Gender": self.radio_layout,
-                 "Activity": self.active_checkbox, "Description": self.description_input}
+                       "Position": self.position_input, "Gender": self.radio_layout,
+                       "Activity": self.active_checkbox, "Description": self.description_input}
         self.entry_layout = self.add_form_layout(entry_items)
 
         # Button layout
@@ -58,10 +51,6 @@ class EmployeeManager(MainWindowBase):
         self.main_layout = self.add_layout(layout_type="horizontal", layout_list=main_items)
 
         self.central_widget.setLayout(self.main_layout)
-
-        # Status bar
-        self.status_bar = QStatusBar(self)
-        self.setStatusBar(self.status_bar)
 
         # Menubar
         self.create_menubar()
@@ -85,33 +74,33 @@ class EmployeeManager(MainWindowBase):
                             )
 
     def form_validator(self, name, email):
-        if not name or not email:
+        if not self.check_fields(name, email):
             QMessageBox.warning(self, "Missing Info", "Please fill all the fields")
             self.status_bar.showMessage("Incomplete Fields", 3000)
             return False
 
-        if not name_regex(name):
+        if not self.entry_validator("name", name):
             QMessageBox.critical(self, "Invalid Name", "Please enter a valid name")
             self.status_bar.showMessage("Invalid Name", 3000)
             self.name_input.clear()
             self.name_input.setFocus()
             return False
 
-        if not email_address_regex(email):
+        if not self.entry_validator("email", email):
             QMessageBox.critical(self, "Invalid Email", "Please enter a valid email")
             self.status_bar.showMessage("Invalid Email", 3000)
             self.email_input.clear()
             self.email_input.setFocus()
             return False
 
-        if self.name_duplicate(name, skip_row=self.table.currentRow()):
+        if self.duplicate_in_table(self.table, 0, name, self.table.currentRow()):
             QMessageBox.critical(self, "Duplicate Name", "Name already exists")
             self.status_bar.showMessage("Duplicate Name", 3000)
             self.name_input.clear()
             self.name_input.setFocus()
             return False
 
-        if self.email_duplicate(email, skip_row=self.table.currentRow()):
+        if self.duplicate_in_table(self.table, 1, email, skip_row=self.table.currentRow()):
             QMessageBox.critical(self, "Duplicate Email", "Email already exists")
             self.status_bar.showMessage("Duplicate Email", 3000)
             self.email_input.clear()
@@ -119,22 +108,6 @@ class EmployeeManager(MainWindowBase):
             return False
 
         return True
-
-    def email_duplicate(self, email, skip_row=None):
-        for row in range(self.table.rowCount()):
-            if skip_row is not None and skip_row == row:
-                continue
-            if self.table.item(row, 1).text() == email:
-                return True
-        return False
-
-    def name_duplicate(self, name, skip_row=None):
-        for row in range(self.table.rowCount()):
-            if skip_row is not None and skip_row == row:
-                continue
-            if self.table.item(row, 0).text() == name:
-                return True
-        return False
 
     def save_file(self):
         pass
@@ -155,15 +128,7 @@ class EmployeeManager(MainWindowBase):
         description = self.description_input.toPlainText()
 
         if self.form_validator(name, email):
-            row = self.table.rowCount()
-            self.table.insertRow(row)
-
-            self.table.setItem(row, 0, QTableWidgetItem(name))
-            self.table.setItem(row, 1, QTableWidgetItem(email))
-            self.table.setItem(row, 2, QTableWidgetItem(position))
-            self.table.setItem(row, 3, QTableWidgetItem(active))
-            self.table.setItem(row, 4, QTableWidgetItem(gender))
-            self.table.setItem(row, 5, QTableWidgetItem(description))
+            self.add_row_to_table(self.table, name, email, position, active, gender, description)
 
             self.status_bar.showMessage("Employee Added", 3000)
             QMessageBox.information(self, "Successful Add", f" Employee {name} is added successfully.")
@@ -186,6 +151,7 @@ class EmployeeManager(MainWindowBase):
         self.position_input.setCurrentIndex(0)
         self.active_checkbox.setChecked(False)
         self.gender_input[0].setChecked(True)
+        self.description_input.clear()
 
 
 # Run

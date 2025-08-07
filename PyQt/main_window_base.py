@@ -2,7 +2,7 @@ import sys
 
 from PyQt6.QtGui import QIcon, QAction
 
-from regex.regex_practice import name_regex, email_address_regex
+from regex.regex_practice import *
 
 from PyQt6.QtWidgets import (QApplication, QWidget, QFormLayout, QMessageBox, QPushButton,
                              QStatusBar, QHBoxLayout, QVBoxLayout, QLineEdit,
@@ -18,6 +18,12 @@ class MainWindowBase(QMainWindow):
         self.setWindowTitle(title)
         self.setWindowIcon(QIcon(icon))
         self.setGeometry(x, y, width, height)
+
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+
+        self.status_bar = QStatusBar(self)
+        self.setStatusBar(self.status_bar)
 
     def create_label(self, title, align=None, style=None):
         label = QLabel(self, title)
@@ -99,6 +105,14 @@ class MainWindowBase(QMainWindow):
         return item
 
     @staticmethod
+    def add_row_to_table(table, *fields):
+        row = table.rowCount()
+        table.insertRow(row)
+
+        for i, field in enumerate(fields):
+            table.setItem(row, i, QTableWidgetItem(field))
+
+    @staticmethod
     def add_form_layout(widgets):
         form_layout = QFormLayout()
         for title, widget in widgets.items():
@@ -124,3 +138,35 @@ class MainWindowBase(QMainWindow):
                 layout.addLayout(layouts)
 
         return layout
+
+    @staticmethod
+    def duplicate_in_table(table, column, text, skip_row=None):
+        for row in range(table.rowCount()):
+            if skip_row and row == skip_row:
+                continue
+            if table.item(row, column).text() == text:
+                return True
+        return False
+
+    @staticmethod
+    def check_fields(*fields):
+        for field in fields:
+            if not field:
+                return False
+        return True
+
+    @staticmethod
+    def entry_validator(validator_type, text):
+        if validator_type == "name":
+            return name_regex(text)
+        elif validator_type == "email":
+            return email_address_regex(text)
+        elif validator_type == "national_id":
+            return national_code_regex(text)
+        elif validator_type == "address":
+            return address_regex(text)
+        elif validator_type == "phone_number":
+            return phone_number_regex(text)
+        else:
+            raise NotImplementedError
+
