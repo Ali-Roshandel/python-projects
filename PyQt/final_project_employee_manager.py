@@ -28,7 +28,7 @@ class EmployeeManager(MainWindowBase):
 
         # Table
         labels = ["Name", "Email", "Position", "Active", "Gender", "Description"]
-        self.table = self.create_table(6, labels=labels, no_editable=True)
+        self.table = self.create_table(6, labels=labels, no_editable=True, func=self.load_from_table)
 
         # Radio button layout
         self.radio_layout = self.add_layout("horizontal", widget_list=self.gender_input)
@@ -59,12 +59,12 @@ class EmployeeManager(MainWindowBase):
         menubar = self.menuBar()
 
         file_menu = menubar.addMenu("File")
-        # file_menu.addAction(self.create_action("Save", "document-save", "Save Employee Information",
-        #                                        "Ctrl+S", )
-        #                     )
-        # file_menu.addAction(self.create_action("Load", "document-open", "Load Employee Information",
-        #                                        "Ctrl+O", )
-        #                     )
+        file_menu.addAction(self.create_action("Save", "document-save", "Save Employee Information",
+                                               "Ctrl+S", )
+                            )
+        file_menu.addAction(self.create_action("Load", "document-open", "Load Employee Information",
+                                               "Ctrl+O", )
+                            )
         file_menu.addAction(self.create_action("Exit", "application-exit", "Exit the App",
                                                "Ctrl+Q", self.close))
 
@@ -100,7 +100,7 @@ class EmployeeManager(MainWindowBase):
             self.name_input.setFocus()
             return False
 
-        if self.duplicate_in_table(self.table, 1, email, skip_row=self.table.currentRow()):
+        if self.duplicate_in_table(self.table, 1, email, self.table.currentRow()):
             QMessageBox.critical(self, "Duplicate Email", "Email already exists")
             self.status_bar.showMessage("Duplicate Email", 3000)
             self.email_input.clear()
@@ -119,13 +119,27 @@ class EmployeeManager(MainWindowBase):
         QMessageBox.about(self, "About", "This is an Employee Manager Application. "
                                          "This is the final project by Ali Roshandel.")
 
-    def add_to_table(self):
+    def get_data(self):
         name = self.name_input.text().strip().lower()
         email = self.email_input.text().strip()
         position = self.position_input.currentText()
         active = "Yes" if self.active_checkbox.isChecked() else "No"
         gender = "Male" if self.gender_input[0].isChecked() else "Female"
         description = self.description_input.toPlainText()
+        return name, email, position, active, gender, description
+
+    def load_from_table(self, row):
+        name, email, position, active, gender, description = self.get_data_from_table(self.table, row)
+
+        self.name_input.setText(name)
+        self.email_input.setText(email)
+        self.position_input.setCurrentText(position)
+        self.active_checkbox.setChecked(True if active == "Yes" else False)
+        self.gender_input[0].setChecked(True) if gender == "Male" else self.gender_input[1].setChecked(True)
+        self.description_input.setText(description)
+
+    def add_to_table(self):
+        name, email, position, active, gender, description = self.get_data()
 
         if self.form_validator(name, email):
             self.add_row_to_table(self.table, name, email, position, active, gender, description)
@@ -135,10 +149,27 @@ class EmployeeManager(MainWindowBase):
             self.clear_fields()
 
     def edit_table(self):
-        pass
+        name, email, position, active, gender, description = self.get_data()
+
+        if self.form_validator(name, email):
+            self.edit_row_from_table(self.table, name, email, position, active, gender, description)
+
+            QMessageBox.information(self, "Successful Edit", " Information has been updated.")
+            self.status_bar.showMessage("Updated", 3000)
+            self.clear_fields()
 
     def delete_from_table(self):
-        pass
+        row = self.table.currentRow()
+
+        if row < 0:
+            QMessageBox.critical(self, "Error", "Please select a row")
+        else:
+            reply = self.yes_no_question("Remove Employee", "Do you want to remove this employee?")
+            if reply == QMessageBox.StandardButton.Yes:
+                self.table.removeRow(row)
+
+                QMessageBox.information(self, "Info Removed", "Info has been removed.")
+                self.status_bar.showMessage("Info Removed", 3000)
 
     def clear_table(self):
         self.table.setRowCount(0)

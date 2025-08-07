@@ -6,8 +6,8 @@ from regex.regex_practice import *
 
 from PyQt6.QtWidgets import (QApplication, QWidget, QFormLayout, QMessageBox, QPushButton,
                              QStatusBar, QHBoxLayout, QVBoxLayout, QLineEdit,
-                             QTextEdit, QTableWidget, QTableWidgetItem, QComboBox, QMainWindow, QCheckBox, QLabel,
-                             QRadioButton
+                             QTextEdit, QTableWidget, QTableWidgetItem, QComboBox,
+                             QMainWindow, QCheckBox, QLabel, QRadioButton
                              )
 
 
@@ -113,6 +113,21 @@ class MainWindowBase(QMainWindow):
             table.setItem(row, i, QTableWidgetItem(field))
 
     @staticmethod
+    def edit_row_from_table(table, *fields):
+        row = table.currentRow()
+
+        for i, field in enumerate(fields):
+            table.item(row, i, QTableWidgetItem(field))
+
+    @staticmethod
+    def get_data_from_table(table, row):
+        items = []
+        for column in range(table.columnCount()):
+            items.append(table.item(row, column).text())
+
+        return items
+
+    @staticmethod
     def add_form_layout(widgets):
         form_layout = QFormLayout()
         for title, widget in widgets.items():
@@ -142,7 +157,7 @@ class MainWindowBase(QMainWindow):
     @staticmethod
     def duplicate_in_table(table, column, text, skip_row=None):
         for row in range(table.rowCount()):
-            if skip_row and row == skip_row:
+            if skip_row is not None and row == skip_row:
                 continue
             if table.item(row, column).text() == text:
                 return True
@@ -170,3 +185,6 @@ class MainWindowBase(QMainWindow):
         else:
             raise NotImplementedError
 
+    @staticmethod
+    def yes_no_question(title, message):
+        return QMessageBox.question(title, message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)

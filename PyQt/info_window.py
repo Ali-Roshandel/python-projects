@@ -176,6 +176,7 @@ class InfoWindow(QMainWindow):
 
                 QMessageBox.information(self, "Info Removed", "Info has been removed.")
                 self.status_bar.showMessage("Info Removed", 3000)
+                self.clear_fields()
 
     def email_duplicate(self, email, skip_row=None):
         for row in range(self.table.rowCount()):
