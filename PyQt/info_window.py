@@ -80,7 +80,7 @@ class InfoWindow(QMainWindow):
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
 
-    def form_validator(self, name=None, email=None, message=" "):
+    def form_validator(self, name=None, email=None, message=" ", skip_row=None):
         if not name or not email or not message:
             QMessageBox.warning(self, "Missing Info", "Please fill all the fields")
             self.status_bar.showMessage("Incomplete Fields", 3000)
@@ -100,14 +100,14 @@ class InfoWindow(QMainWindow):
             self.input_email.setFocus()
             return False
 
-        if self.name_duplicate(name, skip_row=self.table.currentRow()):
+        if self.name_duplicate(name, skip_row=skip_row):
             QMessageBox.critical(self, "Duplicate Name", "Name already exists")
             self.status_bar.showMessage("Duplicate Name", 3000)
             self.input_name.clear()
             self.input_name.setFocus()
             return False
 
-        if self.email_duplicate(email, skip_row=self.table.currentRow()):
+        if self.email_duplicate(email, skip_row=skip_row):
             QMessageBox.critical(self, "Duplicate Email", "Email already exists")
             self.status_bar.showMessage("Duplicate Email", 3000)
             self.input_email.clear()
@@ -152,7 +152,7 @@ class InfoWindow(QMainWindow):
         job = self.input_job.currentText()
         message = self.input_message.toPlainText()
 
-        if self.form_validator(name, email, message):
+        if self.form_validator(name, email, message, skip_row=self.table.currentRow()):
             row = self.table.currentRow()
             self.table.item(row, 0).setText(name)
             self.table.item(row, 1).setText(email)

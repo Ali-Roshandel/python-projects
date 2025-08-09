@@ -105,8 +105,7 @@ class MainWindowBase(QMainWindow):
         return item
 
     @staticmethod
-    def add_row_to_table(table, *fields):
-        row = table.rowCount()
+    def add_row_to_table(table, row, *fields):
         table.insertRow(row)
 
         for i, field in enumerate(fields):
@@ -117,7 +116,7 @@ class MainWindowBase(QMainWindow):
         row = table.currentRow()
 
         for i, field in enumerate(fields):
-            table.item(row, i, QTableWidgetItem(field))
+            table.setItem(row, i, QTableWidgetItem(field))
 
     @staticmethod
     def get_data_from_table(table, row):
@@ -157,7 +156,7 @@ class MainWindowBase(QMainWindow):
     @staticmethod
     def duplicate_in_table(table, column, text, skip_row=None):
         for row in range(table.rowCount()):
-            if skip_row is not None and row == skip_row:
+            if skip_row is not None and skip_row == row:
                 continue
             if table.item(row, column).text() == text:
                 return True
@@ -185,6 +184,5 @@ class MainWindowBase(QMainWindow):
         else:
             raise NotImplementedError
 
-    @staticmethod
-    def yes_no_question(title, message):
-        return QMessageBox.question(title, message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    def yes_no_question(self, title, message):
+        return QMessageBox.question(self, title, message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)

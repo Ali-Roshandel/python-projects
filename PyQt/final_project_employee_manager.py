@@ -1,3 +1,5 @@
+import pandas as pd
+
 from main_window_base import *
 
 
@@ -60,10 +62,10 @@ class EmployeeManager(MainWindowBase):
 
         file_menu = menubar.addMenu("File")
         file_menu.addAction(self.create_action("Save", "document-save", "Save Employee Information",
-                                               "Ctrl+S", )
+                                               "Ctrl+S", self.save_file)
                             )
         file_menu.addAction(self.create_action("Load", "document-open", "Load Employee Information",
-                                               "Ctrl+O", )
+                                               "Ctrl+O", self.load_file)
                             )
         file_menu.addAction(self.create_action("Exit", "application-exit", "Exit the App",
                                                "Ctrl+Q", self.close))
@@ -73,7 +75,7 @@ class EmployeeManager(MainWindowBase):
                                                "Ctrl+H", self.show_about)
                             )
 
-    def form_validator(self, name, email):
+    def form_validator(self, name, email, skip_row=None):
         if not self.check_fields(name, email):
             QMessageBox.warning(self, "Missing Info", "Please fill all the fields")
             self.status_bar.showMessage("Incomplete Fields", 3000)
@@ -93,14 +95,14 @@ class EmployeeManager(MainWindowBase):
             self.email_input.setFocus()
             return False
 
-        if self.duplicate_in_table(self.table, 0, name, self.table.currentRow()):
+        if self.duplicate_in_table(table=self.table, column=0, text=name, skip_row=skip_row):
             QMessageBox.critical(self, "Duplicate Name", "Name already exists")
             self.status_bar.showMessage("Duplicate Name", 3000)
             self.name_input.clear()
             self.name_input.setFocus()
             return False
 
-        if self.duplicate_in_table(self.table, 1, email, self.table.currentRow()):
+        if self.duplicate_in_table(table=self.table, column=1, text=email, skip_row=skip_row):
             QMessageBox.critical(self, "Duplicate Email", "Email already exists")
             self.status_bar.showMessage("Duplicate Email", 3000)
             self.email_input.clear()
@@ -110,9 +112,24 @@ class EmployeeManager(MainWindowBase):
         return True
 
     def save_file(self):
-        pass
+        employee_list = []
+        if self.table.rowCount() == 0:
+            QMessageBox.warning(self, "Empty Table", "There are no employees.")
+            self.status_bar.showMessage("Empty Table", 3000)
+        else:
+            for row in range(self.table.rowCount()):
+                employee = {}
+                (employee["Name"], employee["Email"],
+                 employee["Position"], employee["Active"],
+                 employee["Gender"], employee["Description"]) = self.get_data_from_table(self.table, row)
+
+                employee_list.append(employee)
+
+            df = pd.DataFrame(employee_list)
+            df.to_csv("employees.csv", index=False)
 
     def load_file(self):
+        df = pd.read_csv("employees.csv")
         pass
 
     def show_about(self):
@@ -142,21 +159,26 @@ class EmployeeManager(MainWindowBase):
         name, email, position, active, gender, description = self.get_data()
 
         if self.form_validator(name, email):
-            self.add_row_to_table(self.table, name, email, position, active, gender, description)
+            self.add_row_to_table(self.table, self.table.rowCount(),
+                                  name, email, position, active, gender, description)
 
             self.status_bar.showMessage("Employee Added", 3000)
             QMessageBox.information(self, "Successful Add", f" Employee {name} is added successfully.")
             self.clear_fields()
 
     def edit_table(self):
+        row = self.table.currentRow()
         name, email, position, active, gender, description = self.get_data()
 
-        if self.form_validator(name, email):
-            self.edit_row_from_table(self.table, name, email, position, active, gender, description)
+        if row < 0:
+            QMessageBox.critical(self, "Error", "Please select a row")
+        else:
+            if self.form_validator(name, email, skip_row=self.table.currentRow()):
+                self.edit_row_from_table(self.table, name, email, position, active, gender, description)
 
-            QMessageBox.information(self, "Successful Edit", " Information has been updated.")
-            self.status_bar.showMessage("Updated", 3000)
-            self.clear_fields()
+                QMessageBox.information(self, "Successful Edit", " Information has been updated.")
+                self.status_bar.showMessage("Updated", 3000)
+                self.clear_fields()
 
     def delete_from_table(self):
         row = self.table.currentRow()
@@ -167,9 +189,10 @@ class EmployeeManager(MainWindowBase):
             reply = self.yes_no_question("Remove Employee", "Do you want to remove this employee?")
             if reply == QMessageBox.StandardButton.Yes:
                 self.table.removeRow(row)
+                self.clear_fields()
 
-                QMessageBox.information(self, "Info Removed", "Info has been removed.")
-                self.status_bar.showMessage("Info Removed", 3000)
+                QMessageBox.information(self, "Employee is Removed", "Info has been removed.")
+                self.status_bar.showMessage("Employee Removed", 3000)
 
     def clear_table(self):
         self.table.setRowCount(0)
