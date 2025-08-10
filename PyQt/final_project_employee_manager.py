@@ -1,5 +1,3 @@
-import pandas as pd
-
 from main_window_base import *
 
 
@@ -112,25 +110,24 @@ class EmployeeManager(MainWindowBase):
         return True
 
     def save_file(self):
-        employee_list = []
+        column_list = ["Name", "Email", "Position", "Active", "Gender", "Description"]
         if self.table.rowCount() == 0:
             QMessageBox.warning(self, "Empty Table", "There are no employees.")
             self.status_bar.showMessage("Empty Table", 3000)
         else:
-            for row in range(self.table.rowCount()):
-                employee = {}
-                (employee["Name"], employee["Email"],
-                 employee["Position"], employee["Active"],
-                 employee["Gender"], employee["Description"]) = self.get_data_from_table(self.table, row)
-
-                employee_list.append(employee)
-
-            df = pd.DataFrame(employee_list)
-            df.to_csv("employees.csv", index=False)
+            self.save_to_csv(self.table, "employee_data", column_list)
+            QMessageBox.information(self, "Success", "File saved")
+            self.status_bar.showMessage("File saved", 3000)
 
     def load_file(self):
-        df = pd.read_csv("employees.csv")
-        pass
+        file_name = "employee_data.csv"
+
+        if file_name not in os.listdir():
+            QMessageBox.warning(self, "File Not Found", "There are no employee file data.")
+            self.status_bar.showMessage("File Not Found", 3000)
+        else:
+            self.load_from_file_to_table(file_name, self.table)
+            self.status_bar.showMessage("File loaded", 3000)
 
     def show_about(self):
         QMessageBox.about(self, "About", "This is an Employee Manager Application. "
@@ -142,7 +139,11 @@ class EmployeeManager(MainWindowBase):
         position = self.position_input.currentText()
         active = "Yes" if self.active_checkbox.isChecked() else "No"
         gender = "Male" if self.gender_input[0].isChecked() else "Female"
-        description = self.description_input.toPlainText()
+        if len(self.description_input.toPlainText()) == 0:
+            description = " "
+        else:
+            description = self.description_input.toPlainText()
+
         return name, email, position, active, gender, description
 
     def load_from_table(self, row):

@@ -1,4 +1,7 @@
 import sys
+import os
+
+import pandas as pd
 
 from PyQt6.QtGui import QIcon, QAction
 
@@ -126,6 +129,27 @@ class MainWindowBase(QMainWindow):
 
         return items
 
+    def save_to_csv(self, table, filename, col_names):
+        data_list = []
+        employee = {}
+        for row in range(table.rowCount()):
+            for idx, col in enumerate(col_names):
+                employee[col] = self.get_data_from_table(table, row)[idx]
+
+            data_list.append(employee)
+
+        df = pd.DataFrame.from_records(data_list, columns=col_names)
+        df.to_csv(f"{filename}.csv", index=False)
+
+    @staticmethod
+    def load_from_file_to_table(file_path, table):
+        df = pd.read_csv(file_path)
+        table.setRowCount(len(df))
+
+        for row in range(len(df)):
+            for column in range(table.columnCount()):
+                table.setItem(row, column, QTableWidgetItem(str(df.iloc[row, column])))
+
     @staticmethod
     def add_form_layout(widgets):
         form_layout = QFormLayout()
@@ -185,4 +209,5 @@ class MainWindowBase(QMainWindow):
             raise NotImplementedError
 
     def yes_no_question(self, title, message):
-        return QMessageBox.question(self, title, message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        return QMessageBox.question(self, title, message,
+                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
