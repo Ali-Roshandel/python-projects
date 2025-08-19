@@ -115,19 +115,22 @@ class EmployeeManager(MainWindowBase):
             QMessageBox.warning(self, "Empty Table", "There are no employees.")
             self.status_bar.showMessage("Empty Table", 3000)
         else:
-            self.save_to_csv(self.table, "employee_data", column_list)
+            self.save_to_csv(self.table, column_list)
             QMessageBox.information(self, "Success", "File saved")
             self.status_bar.showMessage("File saved", 3000)
 
     def load_file(self):
-        file_name = "employee_data.csv"
+        file_path = self.load_from_file_path()
 
-        if file_name not in os.listdir():
+        if not file_path:
             QMessageBox.warning(self, "File Not Found", "There are no employee file data.")
             self.status_bar.showMessage("File Not Found", 3000)
         else:
-            self.load_from_file_to_table(file_name, self.table)
-            self.status_bar.showMessage("File loaded", 3000)
+            try:
+                self.load_from_file_to_table(file_path, self.table)
+                self.status_bar.showMessage("File loaded", 3000)
+            except:
+                QMessageBox.critical(self, "Inappropriate File", f"File could not be loaded.")
 
     def show_about(self):
         QMessageBox.about(self, "About", "This is an Employee Manager Application. "

@@ -10,7 +10,7 @@ from regex.regex_practice import *
 from PyQt6.QtWidgets import (QApplication, QWidget, QFormLayout, QMessageBox, QPushButton,
                              QStatusBar, QHBoxLayout, QVBoxLayout, QLineEdit,
                              QTextEdit, QTableWidget, QTableWidgetItem, QComboBox,
-                             QMainWindow, QCheckBox, QLabel, QRadioButton
+                             QMainWindow, QCheckBox, QLabel, QRadioButton, QFileDialog
                              )
 
 
@@ -129,17 +129,36 @@ class MainWindowBase(QMainWindow):
 
         return items
 
-    def save_to_csv(self, table, filename, col_names):
+    def save_to_csv(self, table, col_names):
         data_list = []
-        employee = {}
         for row in range(table.rowCount()):
+            employee = {}
             for idx, col in enumerate(col_names):
                 employee[col] = self.get_data_from_table(table, row)[idx]
 
             data_list.append(employee)
 
-        df = pd.DataFrame.from_records(data_list, columns=col_names)
-        df.to_csv(f"{filename}.csv", index=False)
+        try:
+            file_path = self.save_to_file_path()
+
+            if file_path:
+                df = pd.DataFrame.from_records(data_list, columns=col_names)
+                df.to_csv(file_path, index=False)
+        except Exception as e:
+            print(e)
+
+    def save_to_file_path(self):
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save File", "", "CSV Files (*.csv)"
+        )
+        return file_path
+
+    def load_from_file_path(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open File", "", "All Files (*);;Text Files (*.txt);;CSV Files (*.csv)"
+        )
+
+        return file_path
 
     @staticmethod
     def load_from_file_to_table(file_path, table):
